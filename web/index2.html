@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCALC: math and money, worked out in C</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--peach:#FFB78F;--soft:#FFE4D1}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;color:#000;background:#fff;font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.5}
+.w{max-width:1120px;margin:auto;padding:0 24px}
+section{scroll-margin-top:72px}
+nav{position:sticky;top:0;z-index:5;background:#fff;border-bottom:2px solid #000}
+nav .w{display:flex;justify-content:space-between;align-items:center;height:64px}
+.logo{font-weight:800;font-size:1.5rem;letter-spacing:-.02em}
+nav a{color:#000;text-decoration:none;font-weight:600;margin-left:24px}
+nav a:hover{text-decoration:underline;text-decoration-color:var(--peach);text-decoration-thickness:3px}
+.hero{background:var(--soft);border-bottom:2px solid #000;padding:88px 0}
+.hero .w{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center}
+h1{font-size:clamp(2.6rem,6vw,5.2rem);line-height:1;letter-spacing:-.04em;font-weight:800;margin:0 0 20px}
+.hero p{font-size:1.2rem;max-width:520px;margin:0 0 28px}
+.btn{display:inline-block;padding:14px 26px;font:600 1rem inherit;font-family:inherit;border:2px solid #000;border-radius:999px;background:#000;color:#fff;text-decoration:none;cursor:pointer}
+.btn:hover{background:var(--peach);color:#000}
+.btn.alt{background:#fff;color:#000;margin-left:10px}
+.btn.alt:hover{background:var(--peach)}
+.demo{background:#000;color:#fff;border-radius:28px;padding:32px;box-shadow:12px 12px 0 var(--peach)}
+.demo h2{margin:0 0 12px;font-size:1.1rem;font-weight:600;color:#ccc}
+.demo p{margin:0 0 6px;font-size:1rem}
+.pay{color:var(--peach);font-size:1.4rem!important;font-weight:800;margin-top:10px!important}
+.big{padding:96px 0 24px}
+h2.t{font-size:clamp(2rem,4vw,3.2rem);letter-spacing:-.03em;line-height:1.05;margin:0 0 12px}
+.lead{font-size:1.1rem;max-width:560px;margin:0 0 36px;color:#444}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.box{border:2px solid #000;border-radius:24px;padding:28px}
+.person{display:grid;grid-template-columns:1fr 120px 44px;gap:8px;margin-bottom:10px}
+input,select{width:100%;padding:12px 14px;font:inherit;border:2px solid #000;border-radius:12px;background:#fff}
+:focus-visible{outline:3px solid var(--peach);outline-offset:2px}
+.x{font-size:1.3rem;background:#fff;border:2px solid #000;border-radius:12px;cursor:pointer}
+.x:hover{background:var(--peach)}
+.row{display:flex;gap:10px;margin-top:16px}
+.row .btn{flex:1;text-align:center}
+.report{background:#000;color:#fff;border-radius:24px;padding:32px;min-height:220px}
+.report p{margin:0 0 6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:24px}
+.tool h3{margin:0 0 4px;font-size:1.4rem}
+.tool>p{margin:0 0 16px;color:#444}
+.tool label{display:block;font-weight:600;margin-bottom:12px}
+.tool input,.tool select{margin-top:4px}
+.tool .btn{width:100%;margin-top:4px}
+.out{margin-top:14px;padding:14px 16px;background:#000;color:var(--peach);border-radius:14px;font-weight:600;min-height:52px;overflow-wrap:anywhere}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.how .box{background:var(--soft)}
+.how b{font-size:2rem;display:block}
+.how p{margin:6px 0 0}
+footer{background:#000;color:var(--peach);margin-top:96px;padding:40px 0}
+@media(max-width:800px){.hero{padding:56px 0}.hero .w,.split,.how{grid-template-columns:1fr}nav a{margin-left:14px}.big{padding-top:64px}}
+</style>
+</head>
+<body>
+<nav><div class="w"><span class="logo">CCALC</span><div><a href="#split">Splitwise</a><a href="#tools">Tools</a><a href="#how">How it works</a></div></div></nav>
+
+<header class="hero"><div class="w">
+  <div>
+    <h1>Math and money, worked out in C.</h1>
+    <p>Split a bill between friends, work out a loan or a percentage, and more. Every answer comes from real C code running in your browser.</p>
+    <a class="btn" href="#split">Split a bill</a><a class="btn alt" href="#tools">Open the tools</a>
+  </div>
+  <div class="demo" id="demo"><h2>Loading the C engine...</h2></div>
+</div></header>
+
+<section id="split" class="big"><div class="w">
+  <h2 class="t">Split a bill, fairly</h2>
+  <p class="lead">Add everyone and what they paid. CCALC finds the fewest payments that make everyone even.</p>
+  <div class="split">
+    <div class="box"><div id="people"></div>
+      <div class="row"><button class="btn alt" id="add" style="margin:0">Add person</button><button class="btn" id="go">Split the bill</button></div></div>
+    <div class="report" id="report" aria-live="polite"><p>Enter what each person paid, then split the bill.</p></div>
+  </div>
+</div></section>
+
+<section id="tools" class="big"><div class="w">
+  <h2 class="t">More tools</h2>
+  <p class="lead">Each one calls a function written in C.</p>
+  <div class="grid" id="grid"></div>
+</div></section>
+
+<section id="how" class="big"><div class="w">
+  <h2 class="t">How it works</h2>
+  <p class="lead">The C code is translated once, then every visitor runs it locally.</p>
+  <div class="how">
+    <div class="box"><b>1</b>Write the logic in C<p>Functions in core.c do all the math.</p></div>
+    <div class="box"><b>2</b>Translate to WebAssembly<p>Emscripten turns it into calc.wasm.</p></div>
+    <div class="box"><b>3</b>Run it in the browser<p>This page calls the C functions directly.</p></div>
+  </div>
+</div></section>
+
+<footer><div class="w">CCALC: calculations written in C, compiled to WebAssembly.</div></footer>
+
+<script src="calc.js"></script>
+<script>
+let E=null;
+const $=s=>document.querySelector(s);
+const m2=n=>n.toFixed(2), num=n=>String(Number(n.toFixed(4)));
+const MAX=10;
+
+function show(box,lines){
+  box.textContent="";
+  lines.forEach(l=>{const p=document.createElement("p");p.textContent=l.text;if(l.pay)p.className="pay";box.appendChild(p)});
+}
+
+function solve(paid){
+  const n=paid.length,p=E._malloc(8*n),b=E._malloc(8*n),o=E._malloc(8*3*MAX);
+  E.HEAPF64.set(paid,p/8);
+  const c=E._calc_splitwise(p,n,b,o);
+  const out=Array.from(E.HEAPF64.subarray(o/8,o/8+Math.max(c,0)*3));
+  E._free(p);E._free(b);E._free(o);
+  return{c,out};
+}
+
+function report(names,paid){
+  const{c,out}=solve(paid);
+  if(c<0)return[{text:"Enter between 2 and "+MAX+" people."}];
+  const total=paid.reduce((s,v)=>s+v,0);
+  const L=[{text:"Total: "+m2(total)},{text:"Each share: "+m2(total/paid.length)}];
+  if(c===0)L.push({text:"Everyone is already even.",pay:true});
+  for(let k=0;k<c;k++)L.push({text:names[out[k*3]]+" pays "+names[out[k*3+1]]+" "+m2(out[k*3+2]),pay:true});
+  return L;
+}
+
+const people=$("#people");
+function addPerson(){
+  if(people.children.length>=MAX){show($("#report"),[{text:"You can add up to "+MAX+" people."}]);return}
+  const r=document.createElement("div");r.className="person";
+  r.innerHTML='<input class="n" maxlength="29" placeholder="Name" aria-label="Name"><input class="a" type="number" step="any" min="0" placeholder="Paid" aria-label="Amount paid"><button class="x" aria-label="Remove person">&times;</button>';
+  r.querySelector(".x").onclick=()=>{
+    if(people.children.length<=2){show($("#report"),[{text:"You need at least 2 people."}]);return}
+    r.remove();
+  };
+  people.appendChild(r);
+}
+$("#add").onclick=addPerson;
+$("#go").onclick=()=>{
+  if(!E){show($("#report"),[{text:"The C engine is still loading."}]);return}
+  const names=[],paid=[];
+  people.querySelectorAll(".person").forEach((r,i)=>{
+    names.push(r.querySelector(".n").value.trim()||"Person "+(i+1));
+    const a=parseFloat(r.querySelector(".a").value);paid.push(isNaN(a)?0:a);
+  });
+  if(paid.some(v=>v<0)){show($("#report"),[{text:"Amounts cannot be negative."}]);return}
+  show($("#report"),report(names,paid));
+};
+addPerson();addPerson();addPerson();
+
+const tools=[
+ {name:"Calculator",info:"Add, subtract, multiply or divide.",fields:[["First number"],["Operation","s",["Add","Subtract","Multiply","Divide"]],["Second number"]],
+  run:v=>{const r=E._calc_basic(v[1]+1,v[0],v[2]);return isNaN(r)?"Cannot divide by zero":num(r)}},
+ {name:"Percentage",info:"Find a percentage of a number.",fields:[["Number"],["Percent"]],
+  run:v=>num(E._calc_percentage(v[0],v[1]))},
+ {name:"Simple interest",info:"Interest earned or owed over time.",fields:[["Principal"],["Rate per year (%)"],["Years"]],
+  run:v=>{const i=E._calc_interest(v[0],v[1],v[2]);return"Interest "+m2(i)+", total "+m2(v[0]+i)}},
+ {name:"EMI",info:"Monthly payment on a loan.",fields:[["Loan amount"],["Rate per year (%)"],["Months"]],
+  run:v=>{const e=E._calc_emi(v[0],v[1],v[2]);return isNaN(e)?"Loan amount and months must be above 0":"Monthly "+m2(e)+", total "+m2(e*v[2])}},
+ {name:"Factorial",info:"Multiply a number by every whole number below it.",fields:[["Number from 0 to 20"]],
+  run:v=>{const r=E._calc_factorial(Math.trunc(v[0]));return isNaN(r)?"Use a whole number from 0 to 20":r.toLocaleString("en-US")}},
+ {name:"Temperature",info:"Convert between Celsius and Fahrenheit.",fields:[["Temperature"],["Convert","s",["Celsius to Fahrenheit","Fahrenheit to Celsius"]]],
+  run:v=>num(E._calc_temperature(v[1]+1,v[0]))+(v[1]===0?" F":" C")}
+];
+tools.forEach(t=>{
+  const c=document.createElement("article");c.className="box tool";
+  c.innerHTML="<h3>"+t.name+"</h3><p>"+t.info+"</p>"+t.fields.map(f=>f[1]?"<label>"+f[0]+"<select>"+f[2].map(o=>"<option>"+o+"</option>").join("")+"</select></label>":'<label>'+f[0]+'<input type="number" step="any"></label>').join("")+'<button class="btn">Calculate</button><div class="out" aria-live="polite">Your answer appears here</div>';
+  const ins=c.querySelectorAll("input,select"),out=c.querySelector(".out");
+  c.querySelector("button").onclick=()=>{
+    if(!E){out.textContent="The C engine is still loading.";return}
+    const v=t.fields.map((f,i)=>f[1]?ins[i].selectedIndex:parseFloat(ins[i].value));
+    out.textContent=v.some(isNaN)?"Fill in every box.":t.run(v);
+  };
+  $("#grid").appendChild(c);
+});
+
+createCalcModule().then(m=>{
+  E=m;
+  const d=$("#demo");
+  show(d,[{text:"Live from the C engine"},{text:"3 friends, 900.00 spent"},...report(["Ali","Sam","Raj"],[600,300,0]).slice(2)]);
+}).catch(()=>{$("#demo").textContent="The C engine could not load. Open this page with Live Server."});
+</script>
+</body>
+</html>
